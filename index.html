@@ -168,7 +168,6 @@ font-size:16px;
 cursor:pointer;
 }
 
-/* 刪除按鈕相關樣式 */
 .record {
 padding:10px 0;
 border-bottom:1px solid #ddd;
@@ -270,6 +269,8 @@ opacity:.7;
 <option>午餐</option>
 <option>晚餐</option>
 <option>點心</option>
+<option>飲料</option>
+<option>其他</option>
 </select>
 
 <input
@@ -358,3 +359,276 @@ date,
 meal,
 food
 });
+
+saveRecords(data);
+
+document.getElementById("food").value="";
+
+showDateRecords(date);
+
+renderCalendar();
+
+alert("新增成功");
+}
+
+function renderCalendar(){
+
+const year=currentDate.getFullYear();
+const month=currentDate.getMonth();
+
+document.getElementById("monthTitle")
+.innerText=
+`${year}年 ${month+1}月`;
+
+const first=
+new Date(year,month,1);
+
+let start=
+(first.getDay()+6)%7;
+
+const daysInMonth=
+new Date(year,month+1,0).getDate();
+
+const container=
+document.getElementById("calendarDays");
+
+container.innerHTML='';
+
+for(let i=0;i<start;i++){
+
+const empty=document.createElement("div");
+container.appendChild(empty);
+
+}
+
+for(let d=1;d<=daysInMonth;d++){
+
+const div=document.createElement("div");
+
+div.className="day";
+
+const dateStr=
+`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+const records=getRecords();
+
+const hasRecord=
+records.some(
+r=>r.date===dateStr
+);
+
+if(hasRecord){
+div.classList.add(
+"has-record"
+);
+}
+
+if(dateStr === selectedDate){
+div.classList.add('selected');
+}
+
+const today=
+new Date();
+
+const todayStr=
+today.toISOString().split('T')[0];
+
+if(dateStr===todayStr){
+div.classList.add("today");
+}
+
+div.innerText=d;
+
+div.onclick=()=>{
+
+selectedDate=dateStr;
+
+showDateRecords(dateStr);
+
+document
+.querySelectorAll('.day')
+.forEach(x=>x.classList.remove('selected'));
+
+div.classList.add('selected');
+
+};
+
+container.appendChild(div);
+
+}
+
+updateStats();
+
+}
+
+function updateStats(){
+
+const records=getRecords();
+
+const year=currentDate.getFullYear();
+
+const month=String(
+currentDate.getMonth()+1
+).padStart(2,'0');
+
+const monthRecords=
+records.filter(r=>
+r.date.startsWith(
+`${year}-${month}`
+)
+);
+
+const uniqueDays=
+new Set(
+monthRecords.map(r=>r.date)
+);
+
+document.getElementById(
+"recordDays"
+).innerText=
+uniqueDays.size;
+
+document.getElementById(
+"recordCount"
+).innerText=
+monthRecords.length;
+
+}
+
+function changeMonth(step){
+
+currentDate.setMonth(
+currentDate.getMonth()+step
+);
+
+renderCalendar();
+
+}
+
+function showDateRecords(date){
+
+document.getElementById(
+"selectedDateTitle"
+).innerText=date;
+
+const data=getRecords();
+
+const result=data
+.map((r, index) => ({...r, originalIndex: index}))
+.filter(r=>r.date===date);
+
+if(result.length===0){
+
+document.getElementById(
+"dayRecords"
+).innerHTML="無紀錄";
+
+return;
+}
+
+document.getElementById(
+"dayRecords"
+).innerHTML=result.map(r=>`
+<div class="record">
+<div>
+<strong>${r.meal}</strong><br>
+${r.food}
+</div>
+<button class="delete-btn" onclick="deleteRecord(${r.originalIndex}, '${date}')">❌ 刪除</button>
+</div>
+`).join('');
+
+}
+
+function deleteRecord(index, date){
+if(confirm("確定要刪除這筆紀錄嗎？")){
+const data = getRecords();
+data.splice(index, 1);
+saveRecords(data);
+
+showDateRecords(date);
+renderCalendar();
+}
+}
+
+function searchFood(){
+
+const keyword=
+document.getElementById("search")
+.value.trim();
+
+const data=getRecords();
+
+if(!keyword){
+
+document.getElementById(
+"searchResult"
+).innerHTML='';
+
+return;
+}
+
+const result=data.filter(
+r=>r.food.includes(keyword)
+);
+
+document.getElementById(
+"searchResult"
+).innerHTML=result.map(r=>`
+<div
+class="search-item"
+onclick="jumpToDate('${r.date}')">
+${r.date}<br>
+${r.meal}：${r.food}
+</div>
+`).join('');
+
+}
+
+function jumpToDate(date){
+
+const parts=
+date.split('-');
+
+currentDate=
+new Date(
+parts[0],
+parts[1]-1,
+1
+);
+
+selectedDate = date;
+
+renderCalendar();
+
+showDateRecords(date);
+
+}
+
+function toggleDark(){
+
+document.body.classList.toggle(
+"dark"
+);
+
+localStorage.setItem(
+"theme",
+document.body.classList.contains("dark")
+?"dark":"light"
+);
+
+}
+
+if(
+localStorage.getItem("theme")
+==="dark"
+){
+document.body.classList.add("dark");
+}
+
+renderCalendar();
+
+</script>
+
+</body>
+</html>
