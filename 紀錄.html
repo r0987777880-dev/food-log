@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>飲食紀錄本</title>
+
+<style>
+body{
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    max-width:700px;
+    margin:auto;
+    padding:20px;
+    background:#f7f7f7;
+}
+
+h1{
+    text-align:center;
+}
+
+.card{
+    background:white;
+    border-radius:12px;
+    padding:15px;
+    margin-top:15px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+input, select{
+    width:100%;
+    padding:12px;
+    margin-top:8px;
+    margin-bottom:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    box-sizing:border-box;
+}
+
+button{
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.add-btn{
+    width:100%;
+}
+
+.record{
+    padding:12px;
+    border-bottom:1px solid #eee;
+}
+
+.record:last-child{
+    border-bottom:none;
+}
+
+.delete-btn{
+    margin-top:8px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🍽️ 飲食紀錄本</h1>
+
+<div class="card">
+
+<label>日期</label>
+<input type="date" id="date">
+
+<label>餐別</label>
+<select id="meal">
+    <option>早餐</option>
+    <option>午餐</option>
+    <option>晚餐</option>
+    <option>點心</option>
+</select>
+
+<label>吃了什麼</label>
+<input type="text" id="food" placeholder="例如：蛋餅、豆漿">
+
+<button class="add-btn" onclick="addRecord()">新增紀錄</button>
+
+</div>
+
+<div class="card">
+<h3>📖 歷史紀錄</h3>
+<div id="records"></div>
+</div>
+
+<script>
+
+document.getElementById("date").value =
+new Date().toISOString().split("T")[0];
+
+function getRecords(){
+    return JSON.parse(
+        localStorage.getItem("foodRecords") || "[]"
+    );
+}
+
+function saveRecords(records){
+    localStorage.setItem(
+        "foodRecords",
+        JSON.stringify(records)
+    );
+}
+
+function addRecord(){
+
+    const date =
+        document.getElementById("date").value;
+
+    const meal =
+        document.getElementById("meal").value;
+
+    const food =
+        document.getElementById("food").value.trim();
+
+    if(!food){
+        alert("請輸入內容");
+        return;
+    }
+
+    const records = getRecords();
+
+    records.push({
+        id: Date.now(),
+        date,
+        meal,
+        food
+    });
+
+    saveRecords(records);
+
+    document.getElementById("food").value = "";
+
+    render();
+}
+
+function deleteRecord(id){
+
+    const records =
+        getRecords().filter(
+            r => r.id !== id
+        );
+
+    saveRecords(records);
+
+    render();
+}
+
+function render(){
+
+    const records =
+        getRecords().reverse();
+
+    const container =
+        document.getElementById("records");
+
+    container.innerHTML = "";
+
+    records.forEach(record => {
+
+        container.innerHTML += `
+        <div class="record">
+            <strong>${record.date}</strong><br>
+            ${record.meal}：${record.food}
+            <br>
+            <button
+                class="delete-btn"
+                onclick="deleteRecord(${record.id})">
+                刪除
+            </button>
+        </div>
+        `;
+    });
+}
+
+render();
+
+</script>
+
+</body>
+</html>
